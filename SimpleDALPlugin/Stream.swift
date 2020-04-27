@@ -17,11 +17,11 @@ extension CameraManager {
     }
 }
 
-class CameraManager {
+class CameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     //ターゲットのカメラがあれば設定（見つからなければデフォルト）
-    private let targetDeviceName = ""
+//    private let targetDeviceName = ""
 //    private let targetDeviceName = "FaceTime HDカメラ（ディスプレイ）"
-//    private let targetDeviceName = "FaceTime HD Camera"
+    private let targetDeviceName = "FaceTime HD Camera"
 
     // AVFoundation
     private let session = AVCaptureSession()
@@ -29,7 +29,7 @@ class CameraManager {
     private var videoOutput = AVCaptureVideoDataOutput()
 
     /// セッション開始
-    func startSession(delegate:AVCaptureVideoDataOutputSampleBufferDelegate){
+    func startSession() {
 
         let devices = AVCaptureDevice.devices()
         if devices.count > 0 {
@@ -54,16 +54,12 @@ class CameraManager {
             // 画像バッファ取得のための設定
             let queue:DispatchQueue = DispatchQueue(label: "videoOutput", attributes: .concurrent)
             videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as AnyHashable as! String : Int(kCVPixelFormatType_32BGRA)]
-            videoOutput.setSampleBufferDelegate(delegate, queue: queue)
+            videoOutput.setSampleBufferDelegate(self, queue: queue)
             videoOutput.alwaysDiscardsLateVideoFrames = true
         } else {
             print("カメラが接続されていません")
         }
     }
-
-}
-
-class Camera: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
 
     var cvImageBuffer: CVImageBuffer?
     
@@ -96,8 +92,6 @@ class Stream: Object {
     let height = 720
     let frameRate = 30
 
-    let camera = Camera()
-    
     private var sequenceNumber: UInt64 = 0
     private var queueAlteredProc: CMIODeviceStreamQueueAlteredProc?
     private var queueAlteredRefCon: UnsafeMutableRawPointer?
@@ -170,7 +164,7 @@ class Stream: Object {
     ]
 
     func start() {
-        CameraManager.shared.startSession(delegate: camera)
+        CameraManager.shared.startSession()
 
         timer.resume()
     }
@@ -198,7 +192,8 @@ class Stream: Object {
 //
 //            context.fill(CGRect(x: pos * CGFloat(width), y: 310, width: 100, height: 100))
 //        }
-        return camera.cvImageBuffer
+        return CameraManager.shared.cvImageBuffer
+
     }
 
     private func enqueueBuffer() {
